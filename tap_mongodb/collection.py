@@ -3,10 +3,11 @@ from __future__ import annotations
 
 import collections
 import os
+from datetime import datetime
 from typing import Any, Generator, Iterable, MutableMapping
 
 import orjson
-import singer_sdk._singerlib as singer
+import singer_sdk.singerlib as singer
 import singer_sdk.helpers._flattening
 from bson.objectid import ObjectId
 from bson.timestamp import Timestamp
@@ -75,10 +76,10 @@ class CollectionStream(Stream):
     # The output stream will always have _id as the primary key
     primary_keys = ["_id"]
 
-    @property
-    def is_timestamp_replication_key(self):
-        return self._is_timestamp_replication_key
-     
+    # We handle timestamp replication key conversion in get_records method
+    # For some reason doesn't work without this set
+    is_timestamp_replication_key = False
+
     # No conformance level is set by default since this is a generic stream
     TYPE_CONFORMANCE_LEVEL = TypeConformanceLevel.NONE
 
@@ -94,7 +95,10 @@ class CollectionStream(Stream):
         super().__init__(tap=tap, schema=schema, name=name)
         self._collection = collection
         self._strategy = self.config.get("strategy", "raw")
-        self._is_timestamp_replication_key = self.config.get("is_timestamp_replication_key", False)
+
+    @property
+    def is_sorted(self) -> bool:
+        return self.replication_method == REPLICATION_INCREMENTAL
 
     def _make_resume_token(oplog_doc: dict):
         """Make a resume token the hard way for Mongo <=3.6
@@ -124,13 +128,18 @@ class CollectionStream(Stream):
         return Timestamp(first_record.generation_time, first_record._inc)
 
     def get_records(self, context: dict | None) -> Iterable[dict]:
-        if self._is_timestamp_replication_key:
-            bookmark = self.get_starting_timestamp(context) 
+        bookmark = self.get_starting_replication_key_value(context)
+
+        if self.replication_key:
+            if self.replication_key != "_id":
+                # assume all other replication keys are timestamps
+                bookmark = datetime.fromisoformat(bookmark) if bookmark else None
+            cursor = self._collection.find(
+                {self.replication_key: {"$gt": bookmark}} if bookmark else {}
+            ).sort(self.replication_key, 1)
         else:
-            bookmark = self.get_starting_replication_key_value(context) 
-        for record in self._collection.find(
-            {self.replication_key: {"$gt": bookmark}} if bookmark else {}
-        ):
+            cursor = self._collection.find({})
+        for record in cursor:
             if self._strategy == "envelope":
                 # Return the record wrapped in a document key
                 yield {"_id": record["_id"], "document": record}
@@ -175,7 +184,9 @@ class CollectionStream(Stream):
                     increment_state(
                         state_dict,
                         replication_key=self.replication_key,
-                        latest_record=latest_record,
+                        latest_record=latest_record["document"]
+                        if self._strategy == "envelope"
+                        else latest_record,
                         is_sorted=treat_as_sorted,
                         check_sorted=self.check_sorted,
                     )
