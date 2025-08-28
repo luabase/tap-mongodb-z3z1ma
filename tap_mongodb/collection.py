@@ -79,7 +79,7 @@ class CollectionStream(Stream):
     # We handle timestamp replication key conversion in get_records method
     # For some reason doesn't work without this set
     is_timestamp_replication_key = False
-     
+
     # No conformance level is set by default since this is a generic stream
     TYPE_CONFORMANCE_LEVEL = TypeConformanceLevel.NONE
 
@@ -103,7 +103,8 @@ class CollectionStream(Stream):
         When the tap is running in incremental mode, it is sorted - the replication key value is an ISO-8601-formatted
         string, and these are alphanumerically sortable.
 
-        When the tap is running in log-based mode, it is not sorted - the replication key value here is a hex string."""
+        When the tap is running in log-based mode, it is not sorted - the replication key value here is a hex string.
+        """
 
         return self.replication_method == REPLICATION_INCREMENTAL
 
@@ -136,13 +137,15 @@ class CollectionStream(Stream):
 
     def get_records(self, context: dict | None) -> Iterable[dict]:
         bookmark = self.get_starting_replication_key_value(context)
-        
+
         self.logger.info(f"Bookmark: {bookmark}")
         if self.replication_key:
             if self.replication_key != "_id":
                 # assume all other replication keys are timestamps
                 bookmark = datetime.fromisoformat(bookmark) if bookmark else None
-            cursor = self._collection.find({self.replication_key: {"$gt": bookmark}} if bookmark else {}).sort(self.replication_key, 1)
+            cursor = self._collection.find(
+                {self.replication_key: {"$gt": bookmark}} if bookmark else {}
+            ).sort(self.replication_key, 1)
         else:
             cursor = self._collection.find({})
         for record in cursor:
@@ -190,7 +193,9 @@ class CollectionStream(Stream):
                     increment_state(
                         state_dict,
                         replication_key=self.replication_key,
-                        latest_record=latest_record["document"] if self._strategy == "envelope" else latest_record,
+                        latest_record=latest_record["document"]
+                        if self._strategy == "envelope"
+                        else latest_record,
                         is_sorted=treat_as_sorted,
                         check_sorted=self.check_sorted,
                     )
