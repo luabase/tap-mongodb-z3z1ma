@@ -130,7 +130,6 @@ class CollectionStream(Stream):
     def get_records(self, context: dict | None) -> Iterable[dict]:
         bookmark = self.get_starting_replication_key_value(context)
 
-        self.logger.info(f"Bookmark: {bookmark}")
         if self.replication_key:
             if self.replication_key != "_id":
                 # assume all other replication keys are timestamps
