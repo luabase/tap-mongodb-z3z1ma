@@ -98,14 +98,6 @@ class CollectionStream(Stream):
 
     @property
     def is_sorted(self) -> bool:
-        """Return a boolean indicating whether the replication key is alphanumerically sortable.
-
-        When the tap is running in incremental mode, it is sorted - the replication key value is an ISO-8601-formatted
-        string, and these are alphanumerically sortable.
-
-        When the tap is running in log-based mode, it is not sorted - the replication key value here is a hex string.
-        """
-
         return self.replication_method == REPLICATION_INCREMENTAL
 
     def _make_resume_token(oplog_doc: dict):
