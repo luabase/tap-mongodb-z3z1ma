@@ -35,11 +35,6 @@ plugins:
           description: |
             Make the replication key optional. If set to true, the tap will
             not fail if the replication key is not found in a document.
-        - name: is_timestamp_replication_key
-          description: |
-            This setting allows the tap to use a date-like incremental replication key, 
-            such as an usual `updatedAt`column.
-          value: False
         - name: database_includes
           description: |
             A list of databases to include. If this is set,
