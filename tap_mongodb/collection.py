@@ -190,7 +190,7 @@ class CollectionStream(Stream):
                     increment_state(
                         state_dict,
                         replication_key=self.replication_key,
-                        latest_record=latest_record,
+                        latest_record=latest_record["document"] if self._strategy == "envelope" else latest_record,
                         is_sorted=treat_as_sorted,
                         check_sorted=self.check_sorted,
                     )
