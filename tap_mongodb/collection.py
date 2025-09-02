@@ -21,6 +21,7 @@ from singer_sdk.streams.core import (
     REPLICATION_LOG_BASED,
     TypeConformanceLevel,
 )
+from .utils import _coerce_bytelikes_to_base64
 
 
 def _flatten_record(
@@ -146,6 +147,10 @@ class CollectionStream(Stream):
             else:
                 # Return the record as is
                 yield record
+
+    def post_process(self, row: dict, context: dict | None = None) -> dict:
+        """Sanitize records by converting bytelikes to base64 strings."""
+        return _coerce_bytelikes_to_base64(row)
 
     def _generate_record_messages(
         self,
