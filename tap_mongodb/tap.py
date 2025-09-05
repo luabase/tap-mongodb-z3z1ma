@@ -211,7 +211,9 @@ class TapMongoDB(Tap):
                 self.logger.info("Discovered collection %s.%s", db_name, collection)
                 stream_prefix = self.config.get("stream_prefix", _BLANK)
                 stream_prefix += db_name.replace("-", "_").replace(".", "_")
-                stream_name = f"{stream_prefix}_{collection}"
+                # Sanitize collection name to replace problematic characters for SQL targets
+                sanitized_collection = collection.replace(".", "_").replace("-", "_")
+                stream_name = f"{stream_prefix}_{sanitized_collection}"
                 entry = CatalogEntry.from_dict({"tap_stream_id": stream_name})
                 entry.stream = stream_name
                 strategy: str | None = self.config.get("strategy")
