@@ -238,7 +238,7 @@ class TapMongoDB(Tap):
                 ssh_pkey=ssh_key,
                 remote_bind_address=(remote_host, remote_port),
                 # Use ephemeral local port then inject into mongo config
-                local_bind_address=("localhost", 0),
+                local_bind_address=("127.0.0.1", 0),
             )
 
             try:
@@ -246,7 +246,7 @@ class TapMongoDB(Tap):
                 self._ssh_tunnel = tunnel
                 local_port = tunnel.local_bind_port
                 self.logger.info(
-                    "SSH tunnel established localhost:%s -> %s:%s via %s",
+                    "SSH tunnel established 127.0.0.1:%s -> %s:%s via %s",
                     local_port,
                     remote_host,
                     remote_port,
@@ -254,7 +254,7 @@ class TapMongoDB(Tap):
                 )
 
                 # Update Mongo connection to point to the local forwarded port
-                self.config["mongo"]["host"] = "localhost"
+                self.config["mongo"]["host"] = "127.0.0.1"
                 self.config["mongo"]["port"] = local_port
             except Exception as e:
                 # Ensure cleanup on failure
