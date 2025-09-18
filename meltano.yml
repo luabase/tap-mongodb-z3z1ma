@@ -65,6 +65,16 @@ plugins:
         - name: stream_maps
         - name: stream_map_config
         - name: batch_config
+        # SSH Tunnel Settings (Optional)
+        - name: ssh_tunnel.enable
+          kind: boolean
+          value: false
+        - name: ssh_tunnel.private_key
+          kind: password
+          sensitive: true
+        - name: ssh_tunnel.host
+        - name: ssh_tunnel.username
+        - name: ssh_tunnel.port
       config:
         # All streams will be prefixed with `example_`
         stream_prefix: example_
