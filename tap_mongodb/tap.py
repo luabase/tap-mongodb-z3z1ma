@@ -62,18 +62,14 @@ class TapMongoDB(Tap):
         atexit.register(self._cleanup_resources)
 
         if self._get_ssh_enabled():
-            assert (
-                self.ssh_config.get("host") is not None
-            )
-            assert (
-                self.ssh_config.get("username") is not None
-            )
-            assert (
-                self.ssh_config.get("port") is not None
-            )
-            assert (
-                self.ssh_config.get("private_key") is not None
-            )
+            if self.ssh_config.get("host") is None:
+                raise ValueError("Missing required SSH tunnel config: 'host'")
+            if self.ssh_config.get("username") is None:
+                raise ValueError("Missing required SSH tunnel config: 'username'")
+            if self.ssh_config.get("port") is None:
+                raise ValueError("Missing required SSH tunnel config: 'port'")
+            if self.ssh_config.get("private_key") is None:
+                raise ValueError("Missing required SSH tunnel config: 'private_key'")
 
     config_jsonschema = th.PropertiesList(
         th.Property(
